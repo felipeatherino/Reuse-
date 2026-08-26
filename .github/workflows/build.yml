@@ -18,7 +18,7 @@ jobs:
           node-version: 18
 
       - name: Setup Java JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -26,19 +26,28 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Instalar dependencias
+      - name: Aceitar Licencas do Android SDK
+        run: yes | sdkmanager --licenses || true
+
+      - name: Instalar Dependencias
         run: npm install
 
-      - name: Gerar arquivos nativos do Android
-        run: npx expo prebuild --platform android --clean
+      - name: Gerar Projeto Android
+        run: npx expo prebuild --platform android --no-install
 
-      - name: Dar permissao de execucao ao Gradle
+      - name: Configurar Memoria do Gradle
+        run: |
+          echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=512m" >> android/gradle.properties
+
+      - name: Dar Permissao ao Gradle
         run: chmod +x android/gradlew
 
-      - name: Compilar APK
-        run: cd android && ./gradlew assembleDebug --no-daemon
+      - name: Compilar APK Debug
+        run: |
+          cd android
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Fazer Upload do APK
+      - name: Salvar APK Gerado
         uses: actions/upload-artifact@v4
         with:
           name: App-Instalavel-APK
