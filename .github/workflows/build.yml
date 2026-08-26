@@ -1,4 +1,4 @@
-name: Gerar APK Android
+name: Build APK Android
 
 on:
   push:
@@ -9,31 +9,37 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Baixar código
+      - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Configurar Java
+      - name: Setup Java JDK
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Instalar EAS CLI
-        run: npm install -g eas-cli
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Instalar dependências
+      - name: Instalar dependencias
         run: npm install
 
-      - name: Gerar APK Localmente
-        run: npx eas-cli build --platform android --profile preview --local --output ./reuse.apk
+      - name: Gerar arquivos nativos do Android
+        run: npx expo prebuild --platform android --clean
 
-      - name: Salvar APK como Artefato
+      - name: Dar permissao de execucao ao Gradle
+        run: chmod +x android/gradlew
+
+      - name: Compilar APK de Release
+        run: cd android && ./gradlew assembleRelease --no-daemon
+
+      - name: Fazer Upload do APK
         uses: actions/upload-artifact@v4
         with:
-          name: Reuse-APK
-          path: ./reuse.apk
+          name: App-Release-APK
+          path: android/app/build/outputs/apk/release/*.apk
